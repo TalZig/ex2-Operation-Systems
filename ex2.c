@@ -191,7 +191,7 @@ int main() {
 
     builds[i].pid = fork();
     if (builds[i].pid < 0) {
-      fprintf(stderr, "////////");
+      fprintf(stderr, "Error in system call");
     }
 
 
@@ -211,7 +211,8 @@ int main() {
       break;
     } else {
       signal(SIGCHLD, SIG_IGN);
-      printf("%d\n", builds[i].pid);
+      if(builds[i].pid > 0)
+        printf("%d\n", builds[i].pid);
       if (jobsJumpFlag) {
         jobsFunction(builds, i, fatherID);
         flag = 1;
