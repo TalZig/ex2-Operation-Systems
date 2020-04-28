@@ -150,6 +150,8 @@ int main() {
     fgets(builds[i].buff, 100, stdin);
     strcpy(buffer, builds[i].buff);
     strtok(builds[i].buff, "\n");
+
+
     if (strcmp(builds[i].buff, "exit") == 0) {
       builds[i].str[0] = "exit";
       exitJumpFlag = 1;
@@ -180,6 +182,13 @@ int main() {
       cdJumpFlag = 1;
       jumpFlag = 1;
     }
+    if(strcmp(builds[i].str[0],"echo")== 0){
+      if(builds[i].str[1] != NULL && builds[i].str[1][0] == 34 && builds[i].str[1][strlen(builds[i].str[1]) - 1] == 34){
+        builds[i].str[1]++;
+        builds[i].str[1][strlen(builds[i].str[1]) - 1] = '\0';
+      }
+    }
+
     builds[i].pid = fork();
     if (builds[i].pid < 0) {
       fprintf(stderr, "////////");
@@ -197,6 +206,7 @@ int main() {
         builds[i].str[j - 1] = NULL;
       else
         builds[i].str[j] = NULL;
+
       status = execvp(builds[i].str[0], builds[i].str);
       break;
     } else {
