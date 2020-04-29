@@ -183,10 +183,15 @@ int main() {
       jumpFlag = 1;
     }
     if(strcmp(builds[i].str[0],"echo")== 0){
-      if(builds[i].str[1] != NULL && builds[i].str[1][0] == 34 && builds[i].str[j-1][strlen(builds[i].str[j-1]) - 1] == 34){
+      if(builds[i].str[1] != NULL && builds[i].str[1][0] == 34 &&
+      ((!flag && builds[i].str[j-1][strlen(builds[i].str[j-1]) - 1] == 34) ||
+      (flag && builds[i].str[j-2][strlen(builds[i].str[j-2]) - 1] == 34))){
         builds[i].str[1] = strstr(builds[i].buff,"\"");
         builds[i].str[1]++;
-        builds[i].str[1][strlen(builds[i].str[1]) - 1] = '\0';
+        char *e= strchr(builds[i].str[1],'\"');
+
+        int index = (int) (e - builds[i].str[1]);
+        builds[i].str[1][index] = '\0';
         builds[i].str[2] = NULL;
       }
     }
@@ -195,7 +200,6 @@ int main() {
     if (builds[i].pid < 0) {
       fprintf(stderr, "Error in system call");
     }
-
 
       // child
     else if (builds[i].pid == 0) {
