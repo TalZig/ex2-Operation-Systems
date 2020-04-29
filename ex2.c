@@ -183,9 +183,11 @@ int main() {
       jumpFlag = 1;
     }
     if(strcmp(builds[i].str[0],"echo")== 0){
-      if(builds[i].str[1] != NULL && builds[i].str[1][0] == 34 && builds[i].str[1][strlen(builds[i].str[1]) - 1] == 34){
+      if(builds[i].str[1] != NULL && builds[i].str[1][0] == 34 && builds[i].str[j-1][strlen(builds[i].str[j-1]) - 1] == 34){
+        builds[i].str[1] = strstr(builds[i].buff,"\"");
         builds[i].str[1]++;
         builds[i].str[1][strlen(builds[i].str[1]) - 1] = '\0';
+        builds[i].str[2] = NULL;
       }
     }
 
@@ -199,14 +201,12 @@ int main() {
     else if (builds[i].pid == 0) {
       if (jumpFlag)
         break;
-
-      if (strcmp(builds[i].str[j - 1], "&") == 0)
+      if (builds[i].str[j-1] != NULL && strcmp(builds[i].str[j - 1], "&") == 0)
         flag = 1;
       if (flag)
         builds[i].str[j - 1] = NULL;
       else
         builds[i].str[j] = NULL;
-
       status = execvp(builds[i].str[0], builds[i].str);
       break;
     } else {
