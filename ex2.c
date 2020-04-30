@@ -167,8 +167,8 @@ int main() {
       jobsJumpFlag = 1;
       jumpFlag = 1;
     }
-    if (strchr(buffer, '&') != NULL)
-      flag = 1;
+    //if (strchr(buffer, '&') != NULL)
+    //  flag = 1;
     strtok(buffer, "\n");
     token = strtok(buffer, " ");
 
@@ -182,6 +182,8 @@ int main() {
       cdJumpFlag = 1;
       jumpFlag = 1;
     }
+    if (builds[i].str[j-1] != NULL && strcmp(builds[i].str[j - 1], "&") == 0)
+      flag = 1;
     if(strcmp(builds[i].str[0],"echo")== 0){
       if(builds[i].str[1] != NULL && builds[i].str[1][0] == 34 &&
       ((!flag && builds[i].str[j-1][strlen(builds[i].str[j-1]) - 1] == 34) ||
@@ -205,13 +207,13 @@ int main() {
     else if (builds[i].pid == 0) {
       if (jumpFlag)
         break;
-      if (builds[i].str[j-1] != NULL && strcmp(builds[i].str[j - 1], "&") == 0)
-        flag = 1;
+
       if (flag)
         builds[i].str[j - 1] = NULL;
       else
         builds[i].str[j] = NULL;
       status = execvp(builds[i].str[0], builds[i].str);
+      fprintf(stderr, "Error in system call");
       break;
     } else {
       signal(SIGCHLD, SIG_IGN);
