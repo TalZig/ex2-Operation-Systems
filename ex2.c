@@ -12,7 +12,12 @@ typedef struct {
   char *str[100];
   char *buff;
 } build;
-
+/*void freeAll(build build1[],int end){
+ * int i;
+  for(i = 0;i < end; i++){
+    free(build1[i].buff);
+  }
+}*/
 //function that removes the last slash.
 void removeSlash(char *c) {
   int i = 0;
@@ -42,7 +47,7 @@ void jobsFunction(build builds[], int end, int fatherID) {
 void history(build builds[], int end) {
   int i;
   for (i = 0; i <= end; i++) {
-    //printf("%d kill is %d\n",builds[i].pid, kill(builds[i].pid,0));;
+    //check if the current pid is running or not
     if ((kill(builds[i].pid, 0) == 0)) {
       printf("%ld %s RUNNING\n", (long) builds[i].pid, builds[i].buff);
     } else
@@ -59,10 +64,12 @@ char *cdFunction(build builds[], int end, char *fatherPath) {
   int status;
   //cd ~
   if (builds[i].str[1] == NULL || builds[i].str[1][0] == '~') {
-    strcpy(path, "/home/");
-    builds[i].str[1]++;
-    if (builds[i].str[1] != NULL)
+    strcpy(path, getenv("HOME"));
+    //builds[i].str[1]++;
+    if (builds[i].str[1] != NULL) {
+      builds[i].str[1]++;
       strcat(path, builds[i].str[1]);
+    }
     //check for too many arguments
     if (builds[i].str[2] != NULL) {
       fprintf(stderr, "Error: Too many arguments\n");
@@ -89,7 +96,7 @@ char *cdFunction(build builds[], int end, char *fatherPath) {
       return fatherPath;
     }
     status = chdir(fatherPath);
-    if(status == 0 && strcmp(fatherPath,path) != 0)
+    if(status == 0)
       printf("%s\n",fatherPath);
   }
 
@@ -144,32 +151,34 @@ int main() {
     int historyJumpFlag = 0, exitJumpFlag = 0, cdJumpFlag = 0, jobsJumpFlag = 0, jumpFlag = 0;
     j = 0;
     char dest[110];
-
+    //print > at the beginning of the row
     printf("> ");
     builds[i].buff = (char *) malloc(100);
+    //wait for input
     fgets(builds[i].buff, 100, stdin);
     strcpy(buffer, builds[i].buff);
+    //split by \n
     strtok(builds[i].buff, "\n");
-
-
+    //if input is equal to exit, exitJumpFlag = 1
     if (strcmp(builds[i].buff, "exit") == 0) {
       builds[i].str[0] = "exit";
       exitJumpFlag = 1;
       jumpFlag = 1;
     }
+    //if input is equal to exit, historyJumpFlag = 1
     if (strcmp(builds[i].buff, "history") == 0) {
       builds[i].str[0] = "history";
       historyJumpFlag = 1;
       jumpFlag = 1;
     }
+    //if input is equal to exit, jobsJumpFlag = 1
     if (strcmp(builds[i].buff, "jobs") == 0) {
       builds[i].str[0] = "jobs";
       jobsJumpFlag = 1;
       jumpFlag = 1;
     }
-    //if (strchr(buffer, '&') != NULL)
-    //  flag = 1;
     strtok(buffer, "\n");
+    //split by space
     token = strtok(buffer, " ");
 
     //strtok while, split by space
@@ -182,32 +191,36 @@ int main() {
       cdJumpFlag = 1;
       jumpFlag = 1;
     }
+    //check for "&" at the end of the row
     if (builds[i].str[j-1] != NULL && strcmp(builds[i].str[j - 1], "&") == 0)
       flag = 1;
     if(strcmp(builds[i].str[0],"echo")== 0){
+      //check for echo with "" (34 = " in ascii table)
       if(builds[i].str[1] != NULL && builds[i].str[1][0] == 34 &&
       ((!flag && builds[i].str[j-1][strlen(builds[i].str[j-1]) - 1] == 34) ||
       (flag && builds[i].str[j-2][strlen(builds[i].str[j-2]) - 1] == 34))){
-        builds[i].str[1] = strstr(builds[i].buff,"\"");
+        //removing the ""
+        strcpy(builds[i].str[1],strstr(builds[i].buff,"\""));
         builds[i].str[1]++;
         char *e= strchr(builds[i].str[1],'\"');
-
         int index = (int) (e - builds[i].str[1]);
         builds[i].str[1][index] = '\0';
         builds[i].str[2] = NULL;
       }
     }
-
+    //insert new pid to builds[i].pid
     builds[i].pid = fork();
+
+    //case of error
     if (builds[i].pid < 0) {
       fprintf(stderr, "Error in system call");
     }
 
       // child
     else if (builds[i].pid == 0) {
+      //sign that the user's input is exit/history/jobs/cd
       if (jumpFlag)
         break;
-
       if (flag)
         builds[i].str[j - 1] = NULL;
       else
@@ -217,23 +230,30 @@ int main() {
       break;
     } else {
       signal(SIGCHLD, SIG_IGN);
+
+      //parent
       if(builds[i].pid > 0)
         printf("%d\n", builds[i].pid);
+      //jobs case
       if (jobsJumpFlag) {
         jobsFunction(builds, i, fatherID);
         flag = 1;
       }
+      //history case
       if (historyJumpFlag) {
         history(builds, i);
         flag = 1;
       }
+      //exit case
       if (exitJumpFlag) {
         exit(1);
       }
+      //cd case
       if (cdJumpFlag) {
+        //save the fathePath for the next time if the user's input will be "cd -"
         fatherPath = cdFunction(builds, i, fatherPath);
       }
-
+      //flag = true sign that there is "&" at the end of the row,so dont wait if flag == true
       if (!flag) {
         waitpid(builds[i].pid, &status, 0);
       }
